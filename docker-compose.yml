@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # PostgreSQL数据库服务（带初始化脚本）
+  postgres:
+    image: postgres:17.4
+    container_name: c-pg
+    privileged: true
+    ports:
+      - '5432:5432'
+    volumes:
+      - c-pg-data:/var/lib/postgresql/data
+      - ./res/schema.pg.sql:/docker-entrypoint-initdb.d/schema.pg.sql
+    environment:
+      - POSTGRES_PASSWORD=password777
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  foxee:
+    build: .
+    container_name: foxee
+    image: foxee:1.0.0
+    ports:
+      - '3000:3000'
+    restart: unless-stopped
+    profiles: ['app']
+# 定义持久化卷
+volumes:
+  c-pg-data:
+
+# 定义网络
+networks:
+  app-network:
+    driver: bridge
